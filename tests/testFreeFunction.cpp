@@ -60,6 +60,34 @@ TEST(FreeFunction, EnqueueOnTaskQueueNoOptimizationsInPlace) {
     taskQueue.shutdown();
 }
 
+TEST(FreeFunction, EnqueueOnTaskQueueOptimizationsInPlace) {
+    promise<vector<string>> promise;
+    TaskQueue taskQueue;
+
+    InstrumentedClass byValue("byValue");
+    InstrumentedClass byRef("byRef");
+    InstrumentedClass byCRef("byCRef");
+    InstrumentedClass capturedInCb("capturedInCb");
+
+    auto cbLambda = [&promise, capturedInCb = move(capturedInCb)](const auto & ids) {
+        for (const auto & id : ids) {
+            OSTREAM << id << ", ";
+        }
+        OSTREAM << capturedInCb.id() << endl;
+        auto idsCopy{ids};
+        idsCopy.push_back(capturedInCb.id());
+        promise.set_value(move(idsCopy));
+    };
+
+    taskQueue.enqueue(
+        [byValue = move(byValue), byRef = move(byRef), byCRef = move(byCRef), callbackFn = move(cbLambda)]() mutable {
+            asyncFn(std::move(byValue), byRef, byCRef, std::move(callbackFn));
+        });
+    const auto ids = promise.get_future().get();
+
+    taskQueue.shutdown();
+}
+
 TEST(FreeFunction, Enqueue2OnTaskQueue) {
     promise<vector<string>> promise;
     TaskQueue taskQueue;
