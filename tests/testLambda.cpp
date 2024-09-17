@@ -1,6 +1,6 @@
+#include "ConditionalStream.h"
 #include "InstrumentedClass.h"
 #include "MemoryManager.h"
-#include "ConditionalStream.h"
 
 #include <array>
 #include <gtest/gtest.h>
@@ -15,7 +15,7 @@ TEST(Lambda, DefaultSize) {
 
 TEST(Lambda, CaptureByRef) {
     // assume it is a 32-bit machine nd sizeof(InstrumentedClass) == 32
-    InstrumentedClass obj1{"a"}; 
+    InstrumentedClass obj1{"a"};
     InstrumentedClass obj2{"b"};
 
     auto lambda = [&] {
@@ -61,7 +61,7 @@ TEST(Lambda, CaptureByMove) {
     EXPECT_NE(px, &x);
     EXPECT_EQ(ps, oldAddress);
 #if _DEBUG
-    constexpr size_t expectedCount = 1;     // std::vector on move does an allocation of 16 bytes.
+    constexpr size_t expectedCount = 1; // std::vector on move does an allocation of 16 bytes.
 #else
     constexpr size_t expectedCount = 0;
 #endif
@@ -88,4 +88,3 @@ TEST(Lambda, CaptureByValue) {
     EXPECT_EQ(id1, "C(a)");
     EXPECT_EQ(id2, "C(b)");
 }
-

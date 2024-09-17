@@ -5,8 +5,7 @@
 #include <gtest/gtest.h>
 
 TEST(StdFnFromLambda, LambdaCaptureByRef) {
-
-   int x = 42;
+    int x = 42;
     std::vector<int> v;
     v.reserve(10000);
     for (int i = 0; i < 10000; ++i) {

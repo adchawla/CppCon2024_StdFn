@@ -35,20 +35,19 @@ TEST(FreeFunction, EnqueueOnTaskQueue) {
     std::promise<std::vector<std::string>> promise;
     TaskQueue taskQueue;
 
-    taskQueue.enqueue(
-        [byValue = InstrumentedClass("byValue"), byRef = InstrumentedClass("byRef"),
-         byCRef = InstrumentedClass("byCRef"),
-         callbackFn = [&promise, capturedInCb = InstrumentedClass("capturedInCb")](const auto & ids) {
-             for (const auto & id : ids) {
-                 OSTREAM << id << ", ";
-             }
-             OSTREAM << capturedInCb.id() << std::endl;
-             std::vector<std::string> idsCopy(ids);
-             idsCopy.push_back(capturedInCb.id());
-             promise.set_value(std::move(idsCopy));
-         }]() mutable {
-            asyncFn(std::move(byValue), byRef, byCRef, callbackFn);
-        });
+    taskQueue.enqueue([byValue = InstrumentedClass("byValue"), byRef = InstrumentedClass("byRef"),
+                       byCRef = InstrumentedClass("byCRef"),
+                       callbackFn = [&promise, capturedInCb = InstrumentedClass("capturedInCb")](const auto & ids) {
+                           for (const auto & id : ids) {
+                               OSTREAM << id << ", ";
+                           }
+                           OSTREAM << capturedInCb.id() << std::endl;
+                           std::vector<std::string> idsCopy(ids);
+                           idsCopy.push_back(capturedInCb.id());
+                           promise.set_value(std::move(idsCopy));
+                       }]() mutable {
+        asyncFn(std::move(byValue), byRef, byCRef, callbackFn);
+    });
 
     const auto ids = promise.get_future().get();
 

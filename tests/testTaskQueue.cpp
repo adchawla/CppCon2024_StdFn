@@ -31,7 +31,7 @@ TEST(TaskQueue, LambdaCaptureByCopy) {
     InstrumentedClass obj("a");
     constexpr auto nElements = sizeof(std::function<void()>) / sizeof(int);
     std::array<int, nElements> xs;
-    
+
     taskQueue.enqueue([&promise, obj, xs] {
         std::cout << xs[0];
         promise.set_value(obj.id());
