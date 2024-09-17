@@ -6,13 +6,14 @@
 #include <gtest/gtest.h>
 
 using namespace my_library;
+using namespace std;
 
-using CallbackFn = std::function<void(std::vector<std::string>)>;
+using CallbackFn = function<void(vector<string>)>;
 
 void asyncFn(
     InstrumentedClass byValue, InstrumentedClass & byRef, const InstrumentedClass & byCRef,
-    const std::function<void(std::vector<std::string>)> & callbackFn) {
-    callbackFn(std::vector{byValue.id(), byRef.id(), byCRef.id()});
+    const function<void(vector<string>)> & callbackFn) {
+    callbackFn(vector{byValue.id(), byRef.id(), byCRef.id()});
 }
 
 TEST(FreeFunction, DirectCall) {
@@ -20,10 +21,10 @@ TEST(FreeFunction, DirectCall) {
     InstrumentedClass byRef("byRef");
     InstrumentedClass byCRef("byCRef");
 
-    std::vector<std::string> ids;
+    vector<string> ids;
 
     asyncFn(byValue, byRef, byCRef, [&ids](auto strings) mutable {
-        ids = std::move(strings);
+        ids = move(strings);
     });
 
     EXPECT_EQ(ids[0], "C(byValue)");
@@ -31,46 +32,51 @@ TEST(FreeFunction, DirectCall) {
     EXPECT_EQ(ids[2], "byCRef");
 }
 
-TEST(FreeFunction, EnqueueOnTaskQueue) {
-    std::promise<std::vector<std::string>> promise;
+TEST(FreeFunction, EnqueueOnTaskQueueNoOptimizationsInPlace) {
+    promise<vector<string>> promise;
     TaskQueue taskQueue;
 
-    taskQueue.enqueue([byValue = InstrumentedClass("byValue"), byRef = InstrumentedClass("byRef"),
-                       byCRef = InstrumentedClass("byCRef"),
-                       callbackFn = [&promise, capturedInCb = InstrumentedClass("capturedInCb")](const auto & ids) {
-                           for (const auto & id : ids) {
-                               OSTREAM << id << ", ";
-                           }
-                           OSTREAM << capturedInCb.id() << std::endl;
-                           std::vector<std::string> idsCopy(ids);
-                           idsCopy.push_back(capturedInCb.id());
-                           promise.set_value(std::move(idsCopy));
-                       }]() mutable {
-        asyncFn(std::move(byValue), byRef, byCRef, callbackFn);
-    });
+    InstrumentedClass byValue("byValue");
+    InstrumentedClass byRef("byRef");
+    InstrumentedClass byCRef("byCRef");
+    InstrumentedClass capturedInCb("capturedInCb");
 
+    auto cbLambda = [&promise, capturedInCb = move(capturedInCb)](const auto & ids) {
+        for (const auto & id : ids) {
+            OSTREAM << id << ", ";
+        }
+        OSTREAM << capturedInCb.id() << endl;
+        auto idsCopy{ids};
+        idsCopy.push_back(capturedInCb.id());
+        promise.set_value(move(idsCopy));
+    };
+
+    taskQueue.enqueue(
+        [byValue = move(byValue), byRef = move(byRef), byCRef = move(byCRef), callbackFn = move(cbLambda)]() mutable {
+            asyncFn(byValue, byRef, byCRef, callbackFn);
+        });
     const auto ids = promise.get_future().get();
 
     taskQueue.shutdown();
 }
 
 TEST(FreeFunction, Enqueue2OnTaskQueue) {
-    std::promise<std::vector<std::string>> promise;
+    promise<vector<string>> promise;
     TaskQueue taskQueue;
 
     taskQueue.enqueue2(
         [byValue = InstrumentedClass("byValue"), byRef = InstrumentedClass("byRef"),
          byCRef = InstrumentedClass("byCRef"),
-         callbackFn = [&promise, capturedInCb = InstrumentedClass("capturedInCb")](std::vector<std::string> ids) {
-             OSTREAM << "ids.size() = " << ids.size() << std::endl;
+         callbackFn = function([&promise, capturedInCb = InstrumentedClass("capturedInCb")](vector<string> ids) {
+             OSTREAM << "ids.size() = " << ids.size() << endl;
              for (const auto & id : ids) {
-                 OSTREAM << id << std::endl;
+                 OSTREAM << id << endl;
              }
-             OSTREAM << "capturedInCb.id() = " << capturedInCb.id() << std::endl;
+             OSTREAM << "capturedInCb.id() = " << capturedInCb.id() << endl;
              ids.push_back(capturedInCb.id());
-             promise.set_value(std::move(ids));
-         }]() mutable {
-            asyncFn(std::move(byValue), byRef, byCRef, callbackFn);
+             promise.set_value(move(ids));
+         })]() mutable {
+            asyncFn(move(byValue), byRef, byCRef, callbackFn);
         });
 
     const auto ids = promise.get_future().get();
@@ -81,7 +87,7 @@ TEST(FreeFunction, Enqueue2OnTaskQueue) {
 #if 0
 TEST(FreeFunction, ExecuteOnTaskQueue) {
     TaskQueue taskQueue;
-    std::promise<std::tuple<std::string, std::string, std::string>> promise;
+    promise<tuple<string, string, string>> promise;
 
     taskQueue.enqueue([&promise] {
         InstrumentedClass byValue("byValue");
@@ -92,7 +98,7 @@ TEST(FreeFunction, ExecuteOnTaskQueue) {
             byValue, byRef, byCRef,
             [&promise, ](
                 const InstrumentedClass & byValue, const InstrumentedClass & byRef, const InstrumentedClass & byCRef) {
-                promise.set_value(std::make_tuple(byValue.id(), byRef.id(), byCRef.id()));
+                promise.set_value(make_tuple(byValue.id(), byRef.id(), byCRef.id()));
             });
     });
 
@@ -106,7 +112,7 @@ TEST(FreeFunction, ExecuteOnTaskQueue) {
 
 TEST(FreeFunction, ExecuteOnTaskQueueUsingLambda) {
     TaskQueue taskQueue;
-    std::promise<std::tuple<std::string, std::string, std::string>> promise;
+    promise<tuple<string, string, string>> promise;
 
     taskQueue.enqueue([&promise, byValue = InstrumentedClass("byValue"), byRef = InstrumentedClass("byRef"),
                        byCRef = InstrumentedClass("byCRef")]() mutable {
@@ -114,7 +120,7 @@ TEST(FreeFunction, ExecuteOnTaskQueueUsingLambda) {
             byValue, byRef, byCRef,
             [&promise](
                 const InstrumentedClass & byValue, const InstrumentedClass & byRef, const InstrumentedClass & byCRef) {
-                promise.set_value(std::make_tuple(byValue.id(), byRef.id(), byCRef.id()));
+                promise.set_value(make_tuple(byValue.id(), byRef.id(), byCRef.id()));
             });
     });
 
@@ -128,16 +134,16 @@ TEST(FreeFunction, ExecuteOnTaskQueueUsingLambda) {
 
 TEST(FreeFunction, ExecuteOnTaskQueueUsingBind) {
     TaskQueue taskQueue;
-    std::promise<std::tuple<std::string, std::string, std::string>> promise;
+    promise<tuple<string, string, string>> promise;
 
-    taskQueue.enqueue(std::bind(
+    taskQueue.enqueue(bind(
         [&promise](InstrumentedClass byValue, InstrumentedClass & byRef, const InstrumentedClass & byCRef) {
             freeAsyncFn(
                 byValue, byRef, byCRef,
                 [&promise](
                     const InstrumentedClass & byValue, const InstrumentedClass & byRef,
                     const InstrumentedClass & byCRef) {
-                    promise.set_value(std::make_tuple(byValue.id(), byRef.id(), byCRef.id()));
+                    promise.set_value(make_tuple(byValue.id(), byRef.id(), byCRef.id()));
                 });
         },
         InstrumentedClass("byValue"), InstrumentedClass("byRef"), InstrumentedClass("byCRef")));
@@ -152,14 +158,14 @@ TEST(FreeFunction, ExecuteOnTaskQueueUsingBind) {
 }
 
 TEST(FreeFunction, ExecuteOnThreadUsingAsync) {
-    std::promise<std::tuple<std::string, std::string, std::string>> promise;
+    promise<tuple<string, string, string>> promise;
 
-    auto future = std::async(
-        std::launch::async, freeAsyncFn, InstrumentedClass("byValue"), InstrumentedClass("byRef"),
+    auto future = async(
+        launch::async, freeAsyncFn, InstrumentedClass("byValue"), InstrumentedClass("byRef"),
         InstrumentedClass("byCRef"),
         [&promise](
             const InstrumentedClass & byValue, const InstrumentedClass & byRef, const InstrumentedClass & byCRef) {
-            promise.set_value(std::make_tuple(byValue.id(), byRef.id(), byCRef.id()));
+            promise.set_value(make_tuple(byValue.id(), byRef.id(), byCRef.id()));
         });
 
     auto [idValue, idRef, idCRef] = promise.get_future().get();
@@ -171,18 +177,18 @@ TEST(FreeFunction, ExecuteOnThreadUsingAsync) {
 
 TEST(FreeFunction, ExecuteOnTaskQueueUsingLambda2Levels) {
     TaskQueue taskQueue;
-    std::promise<std::tuple<std::string, std::string, std::string>> promise;
+    promise<tuple<string, string, string>> promise;
 
     taskQueue.enqueue([&promise, &taskQueue, byValue = InstrumentedClass("byValue"), byRef = InstrumentedClass("byRef"),
                        byCRef = InstrumentedClass("byCRef")]() {
         taskQueue.enqueue(
-            [&promise, byValue = std::move(byValue), byRef = std::move(byRef), byCRef = std::move(byCRef)]() mutable {
+            [&promise, byValue = move(byValue), byRef = move(byRef), byCRef = move(byCRef)]() mutable {
                 freeAsyncFn(
                     byValue, byRef, byCRef,
                     [&promise](
                         const InstrumentedClass & byValue, const InstrumentedClass & byRef,
                         const InstrumentedClass & byCRef) {
-                        promise.set_value(std::make_tuple(byValue.id(), byRef.id(), byCRef.id()));
+                        promise.set_value(make_tuple(byValue.id(), byRef.id(), byCRef.id()));
                     });
             });
     });
