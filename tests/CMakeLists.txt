@@ -36,4 +36,4 @@ target_include_directories(unitTests PUBLIC
 )
 
 include(GoogleTest)
-gtest_discover_tests(unitTests)
+gtest_discover_tests(unitTests DISCOVERY_MODE PRE_TEST)
