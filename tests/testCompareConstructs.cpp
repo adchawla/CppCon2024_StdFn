@@ -32,8 +32,11 @@ TEST(CompareConstructs, testAsync) {
     InstrumentedClass byRef("byRef");
     InstrumentedClass byCRef("byCRef");
 
-    auto future = async(launch::deferred, fn, move(byValue), std::move(byRef), std::move(byCRef));
-    future.get();
+#if WIN32
+    async(launch::deferred, fn, move(byValue), std::move(byRef), std::move(byCRef)).get()
+#else
+    async(launch::deferred, fn2, move(byValue), move(byCRef)).get();
+#endif
 }
 
 TEST(CompareConstructs, testAsync2) {
