@@ -1,4 +1,5 @@
 #include "ConditionalStream.h"
+#include "Holder.h"
 #include "InstrumentedClass.h"
 #include "MoveWrapper.h"
 #include "TaskQueue.h"
@@ -97,3 +98,51 @@ TEST(PackingData, ByHandAndMoveWrapper) {
     });
     taskQueue.waitForAllPreviousTasks();
 }
+
+TEST(PackingData, ByHolder) {
+    TaskQueue taskQueue;
+
+    InstrumentedClass byValue("byValue");
+    InstrumentedClass byRef("byRef");
+    InstrumentedClass byCRef("byCRef");
+    InstrumentedClass capturedInCb("capturedInCb");
+
+    auto cbLambda = [capturedInCb = move(capturedInCb)](const auto & ids) {
+        for (const auto & id : ids) {
+            OSTREAM << id << ", ";
+        }
+        OSTREAM << capturedInCb.id() << endl;
+    };
+
+    auto uPtr = make_unique_holder(move(byValue), move(byCRef), move(cbLambda));
+    
+    taskQueue.enqueue([holder = MoveWrapper(std::move(uPtr))] {
+        auto & holderRef = holder.value();
+        // holderRef->invoke(asyncFn);
+    });
+    taskQueue.waitForAllPreviousTasks();
+}
+
+TEST(PackingData, ByHolder2) {
+    TaskQueue taskQueue;
+
+    InstrumentedClass byValue("byValue");
+    InstrumentedClass byCRef("byCRef");
+    InstrumentedClass capturedInCb("capturedInCb");
+
+    auto cbLambda = [capturedInCb = move(capturedInCb)](const auto & ids) {
+        for (const auto & id : ids) {
+            OSTREAM << id << ", ";
+        }
+        OSTREAM << capturedInCb.id() << endl;
+    };
+
+    auto uPtr = make_unique_holder(move(byValue), move(byCRef), move(cbLambda));
+
+    taskQueue.enqueue([holder = MoveWrapper(std::move(uPtr))] {
+        auto & holderRef = holder.value();
+        holderRef->invoke(asyncFn2);
+    });
+    taskQueue.waitForAllPreviousTasks();
+}
+

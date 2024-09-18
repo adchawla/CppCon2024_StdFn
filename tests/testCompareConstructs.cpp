@@ -1,9 +1,9 @@
-#include "InstrumentedClass.h"
 #include "ConditionalStream.h"
+#include "InstrumentedClass.h"
 #include "utils.h"
 
-#include <gtest/gtest.h>
 #include <future>
+#include <gtest/gtest.h>
 
 using namespace my_library;
 using namespace std;
@@ -13,7 +13,7 @@ TEST(CompareConstructs, testLambda) {
     InstrumentedClass byRef("byRef");
     InstrumentedClass byCRef("byCRef");
 
-    [byValue = move(byValue), byRef= std::move(byRef), byCRef = move(byCRef)] () mutable  {
+    [byValue = move(byValue), byRef = std::move(byRef), byCRef = move(byCRef)]() mutable {
         fn(move(byValue), byRef, byCRef);
     }();
 }
@@ -46,4 +46,36 @@ TEST(CompareConstructs, testAsync2) {
             fn(move(byValue), byRef, byCRef);
         });
     future.get();
+}
+
+TEST(CompareConstructs, testApply) {
+    InstrumentedClass byValue("byValue");
+    InstrumentedClass byRef("byRef");
+    InstrumentedClass byCRef("byCRef");
+    InstrumentedClass capturedInCb("capturedInCb");
+    auto cbLambda = [capturedInCb = move(capturedInCb)](const auto & ids) {
+        for (const auto & id : ids) {
+            OSTREAM << id << ", ";
+        }
+        OSTREAM << capturedInCb.id() << endl;
+    };
+
+    auto t =
+        make_tuple(move(byValue), move(byRef), move(byCRef), std::move(cbLambda));
+    apply(asyncFn, std::move(t));
+}
+
+TEST(CompareConstructs, testApply2) {
+    InstrumentedClass byValue("byValue");
+    InstrumentedClass byCRef("byCRef");
+    InstrumentedClass capturedInCb("capturedInCb");
+    auto cbLambda = [capturedInCb = move(capturedInCb)](const auto & ids) {
+        for (const auto & id : ids) {
+            OSTREAM << id << ", ";
+        }
+        OSTREAM << capturedInCb.id() << endl;
+    };
+
+    auto t = make_tuple(move(byValue), move(byCRef), std::move(cbLambda));
+    apply(asyncFn2, std::move(t));
 }
