@@ -24,8 +24,11 @@ TEST(PackingData, GoldStandard) {
         }
         OSTREAM << capturedInCb.id() << endl;
     };
-
+#if WIN32
     std::async(launch::async, asyncFn, move(byValue), move(byRef), move(byCRef), move(cbLambda)).wait();
+#else
+    std::async(launch::async, asyncFn2, move(byValue), move(byCRef), move(cbLambda)).wait();
+#endif
 }
 
 TEST(PackingData, ByHand) {

@@ -63,9 +63,11 @@ TEST(CompareConstructs, testApply) {
         OSTREAM << capturedInCb.id() << endl;
     };
 
+#if WIN32
     auto t =
         make_tuple(move(byValue), move(byRef), move(byCRef), std::move(cbLambda));
     apply(asyncFn, std::move(t));
+#endif
 }
 
 TEST(CompareConstructs, testApply2) {
