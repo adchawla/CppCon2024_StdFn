@@ -1,5 +1,7 @@
 #include "TaskQueue.h"
 
+#include <future>
+
 namespace my_library {
     TaskQueue::TaskQueue() {
         thread_ = std::thread([this] {
@@ -25,6 +27,14 @@ namespace my_library {
         if (thread_.joinable()) {
             thread_.join();
         }
+    }
+
+    void TaskQueue::waitForAllPreviousTasks() noexcept {
+        std::promise<void> promise;
+        enqueue2([&promise] {
+            promise.set_value();
+        });
+        promise.get_future().wait();
     }
 
     void TaskQueue::run() {

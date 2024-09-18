@@ -18,6 +18,7 @@ namespace my_library {
         void enqueue(const Task & task);
         void enqueue2(Task task);
         void shutdown();
+        void waitForAllPreviousTasks() noexcept;
 
     private:
         void run();

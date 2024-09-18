@@ -5,6 +5,8 @@ enable_testing()
 add_executable(unitTests
     ConditionalStream.h
     ConditionalStream.cpp
+    utils.h
+    utils.cpp
     testInstrumentedClass.cpp
     testMemoryManager.cpp
     testLambda.cpp
@@ -14,6 +16,7 @@ add_executable(unitTests
     testPackagedTask.cpp
     testFreeFunction.cpp
     testCompareConstructs.cpp
+    testPackingSolution.cpp
 )
 
 include(FetchContent)
