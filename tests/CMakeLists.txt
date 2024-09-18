@@ -13,6 +13,7 @@ add_executable(unitTests
     testTaskQueue.cpp
     testPackagedTask.cpp
     testFreeFunction.cpp
+    testCompareConstructs.cpp
 )
 
 include(FetchContent)

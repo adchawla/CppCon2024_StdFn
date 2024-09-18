@@ -81,7 +81,7 @@ TEST(FreeFunction, EnqueueOnTaskQueueOptimizationsInPlace) {
 
     taskQueue.enqueue(
         [byValue = move(byValue), byRef = move(byRef), byCRef = move(byCRef), callbackFn = move(cbLambda)]() mutable {
-            asyncFn(std::move(byValue), byRef, byCRef, std::move(callbackFn));
+            asyncFn(move(byValue), byRef, byCRef, move(callbackFn));
         });
     const auto ids = promise.get_future().get();
 
