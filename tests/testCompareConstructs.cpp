@@ -33,3 +33,12 @@ TEST(CompareConstructs, testBind) {
     // bind can't directly work with function having reference parameters
     bind(fn2, move(byValue), move(byCRef))();
 }
+
+TEST(CompareConstructs, testAsync) {
+    InstrumentedClass byValue("byValue");
+    InstrumentedClass byRef("byRef");
+    InstrumentedClass byCRef("byCRef");
+
+    auto future = async(launch::deferred, fn, move(byValue), std::move(byRef), std::move(byCRef));
+    future.get();
+}
