@@ -11,6 +11,7 @@ set(PUBLIC_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/../include/InstrumentedClass.h
     ${CMAKE_CURRENT_LIST_DIR}/../include/MemoryManager.h
     ${CMAKE_CURRENT_LIST_DIR}/../include/TaskQueue.h
+    ${CMAKE_CURRENT_LIST_DIR}/../include/MoveWrapper.h
 )
 source_group("Public Headers" FILES ${PUBLIC_HEADERS})
 
