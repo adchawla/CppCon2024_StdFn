@@ -124,7 +124,7 @@ TEST(PackingData, ByTuple2) {
     taskQueue.waitForAllPreviousTasks();
 }
 
-TEST(PackingData, ByHolder) {
+TEST(PackingData, ByHolderManualConversion) {
     TaskQueue taskQueue;
 
     InstrumentedClass byValue("byValue");
