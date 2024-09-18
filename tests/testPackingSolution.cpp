@@ -49,7 +49,9 @@ TEST(PackingData, ByHand) {
         InstrumentedClass byCRef;
         CallbackFn callbackFn;
 
-        Holder(InstrumentedClass && byValue, InstrumentedClass && byRef, InstrumentedClass && byCRef, CallbackFn && callbackFn)
+        Holder(
+            InstrumentedClass && byValue, InstrumentedClass && byRef, InstrumentedClass && byCRef,
+            CallbackFn && callbackFn)
             : byValue(move(byValue)), byRef(move(byRef)), byCRef(move(byCRef)), callbackFn(std::move(callbackFn)) {
         }
     };
@@ -99,6 +101,29 @@ TEST(PackingData, ByHandAndMoveWrapper) {
     taskQueue.waitForAllPreviousTasks();
 }
 
+TEST(PackingData, ByTuple2) {
+    TaskQueue taskQueue;
+
+    InstrumentedClass byValue("byValue");
+    InstrumentedClass byRef("byRef");
+    InstrumentedClass byCRef("byCRef");
+    InstrumentedClass capturedInCb("capturedInCb");
+
+    auto cbLambda = [capturedInCb = move(capturedInCb)](const auto & ids) {
+        for (const auto & id : ids) {
+            OSTREAM << id << ", ";
+        }
+        OSTREAM << capturedInCb.id() << endl;
+    };
+
+    auto t = make_unique_tuple(std::move(byValue), std::move(byCRef), std::move(cbLambda));
+
+    taskQueue.enqueue([mt = MoveWrapper(std::move(t))] {
+        apply(asyncFn2, std::move(*mt.value()));
+    });
+    taskQueue.waitForAllPreviousTasks();
+}
+
 TEST(PackingData, ByHolder) {
     TaskQueue taskQueue;
 
@@ -114,11 +139,16 @@ TEST(PackingData, ByHolder) {
         OSTREAM << capturedInCb.id() << endl;
     };
 
-    auto uPtr = make_unique_holder(move(byValue), move(byCRef), move(cbLambda));
-    
+    auto uPtr = make_unique_holder(move(byValue), move(byRef), move(byCRef), move(cbLambda));
+
+    using HaveType = std::tuple<InstrumentedClass, InstrumentedClass, const InstrumentedClass, CallbackFn>;
+    using WantType = std::tuple<InstrumentedClass, InstrumentedClass &, const InstrumentedClass &, CallbackFn>;
     taskQueue.enqueue([holder = MoveWrapper(std::move(uPtr))] {
-        auto & holderRef = holder.value();
-        // holderRef->invoke(asyncFn);
+        auto & tuple = holder.value()->args;
+        std::apply(
+            asyncFn,
+            WantType{
+                std::move(std::get<0>(tuple)), std::get<1>(tuple), std::get<2>(tuple), std::move(std::get<3>(tuple))});
     });
     taskQueue.waitForAllPreviousTasks();
 }
@@ -140,9 +170,7 @@ TEST(PackingData, ByHolder2) {
     auto uPtr = make_unique_holder(move(byValue), move(byCRef), move(cbLambda));
 
     taskQueue.enqueue([holder = MoveWrapper(std::move(uPtr))] {
-        auto & holderRef = holder.value();
-        holderRef->invoke(asyncFn2);
+        holder.value()->invoke(asyncFn2);
     });
     taskQueue.waitForAllPreviousTasks();
 }
-

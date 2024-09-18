@@ -47,4 +47,10 @@ namespace my_library {
         return make_unique<Holder<Args...>>(forward<Args>(args)...);
     }
 
+    template<typename... Args>
+    auto make_unique_tuple(Args &&... args) {
+        using TupleType = std::tuple<std::decay_t<Args>...>;
+        return std::make_unique<TupleType>(std::forward<Args>(args)...);
+    }
+
 }
