@@ -1,20 +1,14 @@
 #include "ConditionalStream.h"
 #include "InstrumentedClass.h"
 #include "TaskQueue.h"
+#include "utils.h"
 
 #include <future>
 #include <gtest/gtest.h>
 
 using namespace my_library;
 using namespace std;
-
-using CallbackFn = function<void(vector<string>)>;
-
-void asyncFn(
-    InstrumentedClass byValue, InstrumentedClass & byRef, const InstrumentedClass & byCRef,
-    const function<void(vector<string>)> & callbackFn) {
-    callbackFn(vector{byValue.id(), byRef.id(), byCRef.id()});
-}
+using namespace my_test::utils;
 
 TEST(FreeFunction, DirectCall) {
     InstrumentedClass byValue("byValue");
@@ -33,7 +27,6 @@ TEST(FreeFunction, DirectCall) {
 }
 
 TEST(FreeFunction, EnqueueOnTaskQueueNoOptimizationsInPlace) {
-    promise<vector<string>> promise;
     TaskQueue taskQueue;
 
     InstrumentedClass byValue("byValue");
@@ -41,22 +34,19 @@ TEST(FreeFunction, EnqueueOnTaskQueueNoOptimizationsInPlace) {
     InstrumentedClass byCRef("byCRef");
     InstrumentedClass capturedInCb("capturedInCb");
 
-    auto cbLambda = [&promise, capturedInCb = move(capturedInCb)](const auto & ids) {
+    auto cbLambda = [capturedInCb = move(capturedInCb)](const auto & ids) {
         for (const auto & id : ids) {
             OSTREAM << id << ", ";
         }
         OSTREAM << capturedInCb.id() << endl;
-        auto idsCopy{ids};
-        idsCopy.push_back(capturedInCb.id());
-        promise.set_value(move(idsCopy));
     };
 
     taskQueue.enqueue(
         [byValue = move(byValue), byRef = move(byRef), byCRef = move(byCRef), callbackFn = move(cbLambda)]() mutable {
             asyncFn(byValue, byRef, byCRef, callbackFn);
         });
-    const auto ids = promise.get_future().get();
 
+    taskQueue.waitForAllPreviousTasks();
     taskQueue.shutdown();
 }
 
