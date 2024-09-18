@@ -13,6 +13,7 @@ set(PUBLIC_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/../include/TaskQueue.h
     ${CMAKE_CURRENT_LIST_DIR}/../include/MoveWrapper.h
     ${CMAKE_CURRENT_LIST_DIR}/../include/Holder.h
+    ${CMAKE_CURRENT_LIST_DIR}/../include/TupleConvertor.h
 )
 source_group("Public Headers" FILES ${PUBLIC_HEADERS})
 

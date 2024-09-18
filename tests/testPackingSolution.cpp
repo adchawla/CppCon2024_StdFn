@@ -3,6 +3,7 @@
 #include "InstrumentedClass.h"
 #include "MoveWrapper.h"
 #include "TaskQueue.h"
+#include "TupleConvertor.h"
 #include "utils.h"
 
 #include <future>
@@ -145,7 +146,7 @@ TEST(PackingData, ByHolderManualConversion) {
     auto uPtr = make_unique_holder(move(byValue), move(byRef), move(byCRef), move(cbLambda));
 
     using HaveType = std::tuple<InstrumentedClass, InstrumentedClass, const InstrumentedClass, CallbackFn>;
-    using WantType = std::tuple<InstrumentedClass, InstrumentedClass &, const InstrumentedClass &, CallbackFn>;
+    using WantType = std::tuple<InstrumentedClass &&, InstrumentedClass &, const InstrumentedClass &, CallbackFn>;
     taskQueue.enqueue([holder = MoveWrapper(std::move(uPtr))] {
         auto & tuple = holder.value()->args;
         std::apply(
@@ -174,6 +175,32 @@ TEST(PackingData, ByHolder2) {
 
     taskQueue.enqueue([holder = MoveWrapper(std::move(uPtr))] {
         holder.value()->invoke(asyncFn2);
+    });
+    taskQueue.waitForAllPreviousTasks();
+}
+
+TEST(PackingData, ByHolderAndTupleConversion) {
+    TaskQueue taskQueue;
+
+    InstrumentedClass byValue("byValue");
+    InstrumentedClass byRef("byRef");
+    InstrumentedClass byCRef("byCRef");
+    InstrumentedClass capturedInCb("capturedInCb");
+
+    auto cbLambda = [capturedInCb = move(capturedInCb)](const auto & ids) {
+        for (const auto & id : ids) {
+            OSTREAM << id << ", ";
+        }
+        OSTREAM << capturedInCb.id() << endl;
+    };
+
+    auto uPtr = make_unique_holder(move(byValue), move(byRef), move(byCRef), move(cbLambda));
+
+    using HaveType = std::tuple<InstrumentedClass, InstrumentedClass, const InstrumentedClass, CallbackFn>;
+    using WantType = std::tuple<InstrumentedClass, InstrumentedClass &, const InstrumentedClass &, CallbackFn>;
+    taskQueue.enqueue([holder = MoveWrapper(std::move(uPtr))] {
+        auto & tuple = holder.value()->args;
+        std::apply(asyncFn, TupleConvertor(tuple).convert<WantType>());
     });
     taskQueue.waitForAllPreviousTasks();
 }
