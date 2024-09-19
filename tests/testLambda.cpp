@@ -14,7 +14,7 @@ TEST(Lambda, DefaultSize) {
 }
 
 TEST(Lambda, CaptureByRef) {
-    // assume it is a 32-bit machine nd sizeof(InstrumentedClass) == 32
+    // assume it is a 64-bit machine and sizeof(InstrumentedClass) == 32
     InstrumentedClass obj1{"a"};
     InstrumentedClass obj2{"b"};
 
@@ -70,7 +70,7 @@ TEST(Lambda, CaptureByMove) {
 }
 
 TEST(Lambda, CaptureByValue) {
-    // assume it is a 32-bit machine nd sizeof(InstrumentedClass) == 32
+    // assume it is a 64-bit machine and sizeof(InstrumentedClass) == 32
     InstrumentedClass obj1{"a"};
     InstrumentedClass obj2{"b"};
 
