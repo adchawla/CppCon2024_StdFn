@@ -29,7 +29,7 @@ TEST(PackingData, GoldStandard) {
         std::launch::async, asyncFn, std::move(byValue), std::move(byRef), std::move(byCRef), std::move(cbLambda))
         .wait();
 #else
-    std::async(launch::async, asyncFn2, std::move(byValue), std::move(byCRef), std::move(cbLambda)).wait();
+    std::async(std::launch::async, asyncFn2, std::move(byValue), std::move(byCRef), std::move(cbLambda)).wait();
 #endif
 }
 

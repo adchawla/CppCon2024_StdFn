@@ -35,7 +35,7 @@ TEST(CompareConstructs, testAsync) {
 #if WIN32
     std::async(std::launch::deferred, fn, std::move(byValue), std::move(byRef), std::move(byCRef)).get();
 #else
-    async(launch::deferred, fn2, std::move(byValue), std::move(byCRef)).get();
+    async(std::launch::deferred, fn2, std::move(byValue), std::move(byCRef)).get();
 #endif
 }
 

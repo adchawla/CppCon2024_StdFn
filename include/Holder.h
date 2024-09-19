@@ -39,7 +39,7 @@ namespace my_library {
 
         template <typename Callable>
         void invoke(Callable && fn) {
-            apply(fn, move(args));
+            apply(fn, std::move(args));
         }
 
         template <typename Callable>

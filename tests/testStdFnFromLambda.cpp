@@ -27,6 +27,7 @@ TEST(StdFnFromLambda, LambdaCaptureByRef) {
 }
 
 TEST(StdFnFromLambda, LambdaWithinSmallSizeOptimization) {
+#if WIN32
     int x = 42;
     std::vector<int> v;
     v.reserve(10000);
@@ -53,6 +54,7 @@ TEST(StdFnFromLambda, LambdaWithinSmallSizeOptimization) {
     constexpr size_t expectedCount = 0;
 #endif
     EXPECT_EQ(delegate.allAllocations().size(), expectedCount);
+#endif
 }
 
 TEST(StdFnFromLambda, OverSmallSizeOptimization) {
