@@ -1,4 +1,7 @@
 #pragma once
+#include "function_traits.h"
+#include "TupleConvertor.h"
+
 #include <tuple>
 #include <type_traits>
 
@@ -39,6 +42,14 @@ namespace my_library {
         template <typename Callable>
         void invoke(Callable && fn) {
             apply(fn, move(args));
+        }
+
+        template <typename Callable>
+        void invokeEx(Callable && fn) {
+            using DestTupleType = function_traits_args_tuple_t<std::decay_t<Callable>>;
+            auto destT = TupleConvertor(args);
+            std::apply(fn,
+                destT.template convert<DestTupleType>());
         }
     };
 

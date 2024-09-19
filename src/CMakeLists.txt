@@ -14,6 +14,7 @@ set(PUBLIC_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/../include/MoveWrapper.h
     ${CMAKE_CURRENT_LIST_DIR}/../include/Holder.h
     ${CMAKE_CURRENT_LIST_DIR}/../include/TupleConvertor.h
+    ${CMAKE_CURRENT_LIST_DIR}/../include/function_traits.h
 )
 source_group("Public Headers" FILES ${PUBLIC_HEADERS})
 

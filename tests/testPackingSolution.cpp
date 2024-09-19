@@ -204,3 +204,51 @@ TEST(PackingData, ByHolderAndTupleConversion) {
     });
     taskQueue.waitForAllPreviousTasks();
 }
+
+TEST(PackingData, ByHolderFunctionTraitsAndTupleConversion) {
+    TaskQueue taskQueue;
+
+    InstrumentedClass byValue("byValue");
+    InstrumentedClass byRef("byRef");
+    InstrumentedClass byCRef("byCRef");
+    InstrumentedClass capturedInCb("capturedInCb");
+
+    auto cbLambda = [capturedInCb = move(capturedInCb)](const auto & ids) {
+        for (const auto & id : ids) {
+            OSTREAM << id << ", ";
+        }
+        OSTREAM << capturedInCb.id() << endl;
+    };
+
+    auto uPtr = make_unique_holder(move(byValue), move(byRef), move(byCRef), CallbackFn{move(cbLambda)});
+
+    using WantType = function_traits_args_tuple_t<decltype(asyncFn)>;
+    taskQueue.enqueue([holder = MoveWrapper(std::move(uPtr))] {
+        auto & tuple = holder.value()->args;
+        std::apply(asyncFn, TupleConvertor(tuple).convert<WantType>());
+    });
+    taskQueue.waitForAllPreviousTasks();
+}
+
+TEST(PackingData, ByHolderInvokeEx) {
+    TaskQueue taskQueue;
+
+    InstrumentedClass byValue("byValue");
+    InstrumentedClass byRef("byRef");
+    InstrumentedClass byCRef("byCRef");
+    InstrumentedClass capturedInCb("capturedInCb");
+
+    auto cbLambda = [capturedInCb = move(capturedInCb)](const auto & ids) {
+        for (const auto & id : ids) {
+            OSTREAM << id << ", ";
+        }
+        OSTREAM << capturedInCb.id() << endl;
+    };
+
+    auto uPtr = make_unique_holder(move(byValue), move(byRef), move(byCRef), CallbackFn(move(cbLambda)));
+
+    taskQueue.enqueue([holder = MoveWrapper(std::move(uPtr))] {
+        holder.value()->invokeEx(asyncFn);
+    });
+    taskQueue.waitForAllPreviousTasks();
+}

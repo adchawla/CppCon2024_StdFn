@@ -9,10 +9,11 @@ add_executable(unitTests
     utils.cpp
     testInstrumentedClass.cpp
     testMemoryManager.cpp
+    testFunctionTraits.cpp
+    testTaskQueue.cpp
     testLambda.cpp
     testLambdaUsage.cpp
     testStdFnFromLambda.cpp
-    testTaskQueue.cpp
     testPackagedTask.cpp
     testFreeFunction.cpp
     testCompareConstructs.cpp
