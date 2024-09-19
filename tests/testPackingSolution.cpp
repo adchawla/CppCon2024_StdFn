@@ -10,7 +10,6 @@
 #include <gtest/gtest.h>
 
 using namespace my_library;
-using namespace std;
 using namespace my_test::utils;
 
 TEST(PackingData, GoldStandard) {
@@ -19,16 +18,18 @@ TEST(PackingData, GoldStandard) {
     InstrumentedClass byCRef("byCRef");
     InstrumentedClass capturedInCb("capturedInCb");
 
-    auto cbLambda = [capturedInCb = move(capturedInCb)](const auto & ids) {
+    auto cbLambda = [capturedInCb = std::move(capturedInCb)](const auto & ids) {
         for (const auto & id : ids) {
             OSTREAM << id << ", ";
         }
-        OSTREAM << capturedInCb.id() << endl;
+        OSTREAM << capturedInCb.id() << std::endl;
     };
 #if WIN32
-    std::async(launch::async, asyncFn, move(byValue), move(byRef), move(byCRef), move(cbLambda)).wait();
+    std::async(
+        std::launch::async, asyncFn, std::move(byValue), std::move(byRef), std::move(byCRef), std::move(cbLambda))
+        .wait();
 #else
-    std::async(launch::async, asyncFn2, move(byValue), move(byCRef), move(cbLambda)).wait();
+    std::async(launch::async, asyncFn2, std::move(byValue), std::move(byCRef), std::move(cbLambda)).wait();
 #endif
 }
 
@@ -40,11 +41,11 @@ TEST(PackingData, ByHand) {
     InstrumentedClass byCRef("byCRef");
     InstrumentedClass capturedInCb("capturedInCb");
 
-    auto cbLambda = [capturedInCb = move(capturedInCb)](const auto & ids) {
+    auto cbLambda = [capturedInCb = std::move(capturedInCb)](const auto & ids) {
         for (const auto & id : ids) {
             OSTREAM << id << ", ";
         }
-        OSTREAM << capturedInCb.id() << endl;
+        OSTREAM << capturedInCb.id() << std::endl;
     };
 
     struct Holder {
@@ -56,14 +57,18 @@ TEST(PackingData, ByHand) {
         Holder(
             InstrumentedClass && byValue, InstrumentedClass && byRef, InstrumentedClass && byCRef,
             CallbackFn && callbackFn)
-            : byValue(move(byValue)), byRef(move(byRef)), byCRef(move(byCRef)), callbackFn(std::move(callbackFn)) {
+            : byValue(std::move(byValue))
+            , byRef(std::move(byRef))
+            , byCRef(std::move(byCRef))
+            , callbackFn(std::move(callbackFn)) {
         }
     };
 
-    auto holder = make_shared<Holder>(move(byValue), move(byRef), move(byCRef), move(cbLambda));
+    auto holder =
+        std::make_shared<Holder>(std::move(byValue), std::move(byRef), std::move(byCRef), std::move(cbLambda));
 
-    taskQueue.enqueue([holder = move(holder)] {
-        asyncFn(move(holder->byValue), holder->byRef, holder->byCRef, move(holder->callbackFn));
+    taskQueue.enqueue([holder = std::move(holder)] {
+        asyncFn(std::move(holder->byValue), holder->byRef, holder->byCRef, std::move(holder->callbackFn));
     });
     taskQueue.waitForAllPreviousTasks();
 }
@@ -76,11 +81,11 @@ TEST(PackingData, ByHandAndMoveWrapper) {
     InstrumentedClass byCRef("byCRef");
     InstrumentedClass capturedInCb("capturedInCb");
 
-    auto cbLambda = [capturedInCb = move(capturedInCb)](const auto & ids) {
+    auto cbLambda = [capturedInCb = std::move(capturedInCb)](const auto & ids) {
         for (const auto & id : ids) {
             OSTREAM << id << ", ";
         }
-        OSTREAM << capturedInCb.id() << endl;
+        OSTREAM << capturedInCb.id() << std::endl;
     };
 
     struct Holder {
@@ -92,15 +97,19 @@ TEST(PackingData, ByHandAndMoveWrapper) {
         Holder(
             InstrumentedClass && byValue, InstrumentedClass && byRef, InstrumentedClass && byCRef,
             CallbackFn && callbackFn)
-            : byValue(move(byValue)), byRef(move(byRef)), byCRef(move(byCRef)), callbackFn(std::move(callbackFn)) {
+            : byValue(std::move(byValue))
+            , byRef(std::move(byRef))
+            , byCRef(std::move(byCRef))
+            , callbackFn(std::move(callbackFn)) {
         }
     };
 
-    auto holder = MoveWrapper(make_unique<Holder>(move(byValue), move(byRef), move(byCRef), move(cbLambda)));
+    auto holder = MoveWrapper(
+        std::make_unique<Holder>(std::move(byValue), std::move(byRef), std::move(byCRef), std::move(cbLambda)));
 
     taskQueue.enqueue([holder] {
         auto & holderRef = holder.value();
-        asyncFn(move(holderRef->byValue), holderRef->byRef, holderRef->byCRef, move(holderRef->callbackFn));
+        asyncFn(std::move(holderRef->byValue), holderRef->byRef, holderRef->byCRef, std::move(holderRef->callbackFn));
     });
     taskQueue.waitForAllPreviousTasks();
 }
@@ -113,11 +122,11 @@ TEST(PackingData, ByTuple2) {
     InstrumentedClass byCRef("byCRef");
     InstrumentedClass capturedInCb("capturedInCb");
 
-    auto cbLambda = [capturedInCb = move(capturedInCb)](const auto & ids) {
+    auto cbLambda = [capturedInCb = std::move(capturedInCb)](const auto & ids) {
         for (const auto & id : ids) {
             OSTREAM << id << ", ";
         }
-        OSTREAM << capturedInCb.id() << endl;
+        OSTREAM << capturedInCb.id() << std::endl;
     };
 
     auto t = make_unique_tuple(std::move(byValue), std::move(byCRef), std::move(cbLambda));
@@ -136,16 +145,16 @@ TEST(PackingData, ByHolderManualConversion) {
     InstrumentedClass byCRef("byCRef");
     InstrumentedClass capturedInCb("capturedInCb");
 
-    auto cbLambda = [capturedInCb = move(capturedInCb)](const auto & ids) {
+    auto cbLambda = [capturedInCb = std::move(capturedInCb)](const auto & ids) {
         for (const auto & id : ids) {
             OSTREAM << id << ", ";
         }
-        OSTREAM << capturedInCb.id() << endl;
+        OSTREAM << capturedInCb.id() << std::endl;
     };
 
-    auto uPtr = make_unique_holder(move(byValue), move(byRef), move(byCRef), move(cbLambda));
+    auto uPtr = make_unique_holder(std::move(byValue), std::move(byRef), std::move(byCRef), std::move(cbLambda));
 
-    using HaveType = std::tuple<InstrumentedClass, InstrumentedClass, const InstrumentedClass, CallbackFn>;
+    // using HaveType = std::tuple<InstrumentedClass, InstrumentedClass, const InstrumentedClass, CallbackFn>;
     using WantType = std::tuple<InstrumentedClass &&, InstrumentedClass &, const InstrumentedClass &, CallbackFn>;
     taskQueue.enqueue([holder = MoveWrapper(std::move(uPtr))] {
         auto & tuple = holder.value()->args;
@@ -164,14 +173,14 @@ TEST(PackingData, ByHolder2) {
     InstrumentedClass byCRef("byCRef");
     InstrumentedClass capturedInCb("capturedInCb");
 
-    auto cbLambda = [capturedInCb = move(capturedInCb)](const auto & ids) {
+    auto cbLambda = [capturedInCb = std::move(capturedInCb)](const auto & ids) {
         for (const auto & id : ids) {
             OSTREAM << id << ", ";
         }
-        OSTREAM << capturedInCb.id() << endl;
+        OSTREAM << capturedInCb.id() << std::endl;
     };
 
-    auto uPtr = make_unique_holder(move(byValue), move(byCRef), move(cbLambda));
+    auto uPtr = make_unique_holder(std::move(byValue), std::move(byCRef), std::move(cbLambda));
 
     taskQueue.enqueue([holder = MoveWrapper(std::move(uPtr))] {
         holder.value()->invoke(asyncFn2);
@@ -187,16 +196,16 @@ TEST(PackingData, ByHolderAndTupleConversion) {
     InstrumentedClass byCRef("byCRef");
     InstrumentedClass capturedInCb("capturedInCb");
 
-    auto cbLambda = [capturedInCb = move(capturedInCb)](const auto & ids) {
+    auto cbLambda = [capturedInCb = std::move(capturedInCb)](const auto & ids) {
         for (const auto & id : ids) {
             OSTREAM << id << ", ";
         }
-        OSTREAM << capturedInCb.id() << endl;
+        OSTREAM << capturedInCb.id() << std::endl;
     };
 
-    auto uPtr = make_unique_holder(move(byValue), move(byRef), move(byCRef), move(cbLambda));
+    auto uPtr = make_unique_holder(std::move(byValue), std::move(byRef), std::move(byCRef), std::move(cbLambda));
 
-    using HaveType = std::tuple<InstrumentedClass, InstrumentedClass, const InstrumentedClass, CallbackFn>;
+    // using HaveType = std::tuple<InstrumentedClass, InstrumentedClass, const InstrumentedClass, CallbackFn>;
     using WantType = std::tuple<InstrumentedClass, InstrumentedClass &, const InstrumentedClass &, CallbackFn>;
     taskQueue.enqueue([holder = MoveWrapper(std::move(uPtr))] {
         auto & tuple = holder.value()->args;
@@ -213,14 +222,15 @@ TEST(PackingData, ByHolderFunctionTraitsAndTupleConversion) {
     InstrumentedClass byCRef("byCRef");
     InstrumentedClass capturedInCb("capturedInCb");
 
-    auto cbLambda = [capturedInCb = move(capturedInCb)](const auto & ids) {
+    auto cbLambda = [capturedInCb = std::move(capturedInCb)](const auto & ids) {
         for (const auto & id : ids) {
             OSTREAM << id << ", ";
         }
-        OSTREAM << capturedInCb.id() << endl;
+        OSTREAM << capturedInCb.id() << std::endl;
     };
 
-    auto uPtr = make_unique_holder(move(byValue), move(byRef), move(byCRef), CallbackFn{move(cbLambda)});
+    auto uPtr =
+        make_unique_holder(std::move(byValue), std::move(byRef), std::move(byCRef), CallbackFn{std::move(cbLambda)});
 
     using WantType = function_traits_args_tuple_t<decltype(asyncFn)>;
     taskQueue.enqueue([holder = MoveWrapper(std::move(uPtr))] {
@@ -238,14 +248,15 @@ TEST(PackingData, ByHolderInvokeEx) {
     InstrumentedClass byCRef("byCRef");
     InstrumentedClass capturedInCb("capturedInCb");
 
-    auto cbLambda = [capturedInCb = move(capturedInCb)](const auto & ids) {
+    auto cbLambda = [capturedInCb = std::move(capturedInCb)](const auto & ids) {
         for (const auto & id : ids) {
             OSTREAM << id << ", ";
         }
-        OSTREAM << capturedInCb.id() << endl;
+        OSTREAM << capturedInCb.id() << std::endl;
     };
 
-    auto uPtr = make_unique_holder(move(byValue), move(byRef), move(byCRef), CallbackFn(move(cbLambda)));
+    auto uPtr =
+        make_unique_holder(std::move(byValue), std::move(byRef), std::move(byCRef), CallbackFn(std::move(cbLambda)));
 
     taskQueue.enqueue([holder = MoveWrapper(std::move(uPtr))] {
         holder.value()->invokeEx(asyncFn);

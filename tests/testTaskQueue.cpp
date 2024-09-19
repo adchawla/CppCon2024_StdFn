@@ -33,10 +33,9 @@ TEST(TaskQueue, LambdaCaptureByCopy) {
     std::array<int, nElements> xs;
 
     taskQueue.enqueue([&promise, obj, xs] {
-        std::cout << xs[0];
         promise.set_value(obj.id());
     });
-    EXPECT_EQ("M(M(M(C(a))))", promise.get_future().get());
+    EXPECT_EQ("C(M(C(a)))", promise.get_future().get());
 }
 
 TEST(TaskQueue, LambdaCaptureByMove) {
@@ -46,9 +45,9 @@ TEST(TaskQueue, LambdaCaptureByMove) {
     constexpr auto nElements = sizeof(std::function<void()>) / sizeof(int);
     std::array<int, nElements> xs;
 
-    taskQueue.enqueue([&promise, obj = std::move(obj), xs] {
+    taskQueue.enqueue2([&promise, obj = std::move(obj), xs] {
         std::cout << xs[0];
         promise.set_value(obj.id());
     });
-    EXPECT_EQ("M(M(M(M(a))))", promise.get_future().get());
+    EXPECT_EQ("M(M(a))", promise.get_future().get());
 }

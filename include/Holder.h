@@ -1,12 +1,11 @@
 #pragma once
-#include "function_traits.h"
 #include "TupleConvertor.h"
+#include "function_traits.h"
 
 #include <tuple>
 #include <type_traits>
 
 namespace my_library {
-    using namespace std;
     namespace detail {
         template <class T>
         struct unwrap_refwrapper {
@@ -14,29 +13,28 @@ namespace my_library {
         };
 
         template <class T>
-        struct unwrap_refwrapper<reference_wrapper<T>> {
+        struct unwrap_refwrapper<std::reference_wrapper<T>> {
             using type = T &;
         };
 
         template <class T>
-        using unwrap_decay_t = typename unwrap_refwrapper<typename decay<T>::type>::type;
+        using unwrap_decay_t = typename unwrap_refwrapper<std::decay_t<T>>::type;
         // or use unwrap_ref_decay_t (since C++20)
 
         template <class... Types>
         constexpr // since C++14
-            tuple<unwrap_decay_t<Types>...>
+            std::tuple<unwrap_decay_t<Types>...>
             make_tuple(Types &&... args) {
-            return tuple<unwrap_decay_t<Types>...>(forward<Types>(args)...);
+            return std::tuple<unwrap_decay_t<Types>...>(std::forward<Types>(args)...);
         }
-    }
+    } // namespace detail
 
     template <typename... Args>
     struct Holder {
-        tuple<decay_t<Args>...> args;
+        std::tuple<std::decay_t<Args>...> args;
 
         template <typename... TArgs>
-        explicit Holder(TArgs &&... args)
-            : args(forward<TArgs>(args)...) {
+        explicit Holder(TArgs &&... args) : args(std::forward<TArgs>(args)...) {
         }
 
         template <typename Callable>
@@ -48,20 +46,19 @@ namespace my_library {
         void invokeEx(Callable && fn) {
             using DestTupleType = function_traits_args_tuple_t<std::decay_t<Callable>>;
             auto destT = TupleConvertor(args);
-            std::apply(fn,
-                destT.template convert<DestTupleType>());
+            std::apply(fn, destT.template convert<DestTupleType>());
         }
     };
 
-    template<typename... Args>
-    unique_ptr<Holder<Args...>> make_unique_holder(Args &&... args) {
-        return make_unique<Holder<Args...>>(forward<Args>(args)...);
+    template <typename... Args>
+    std::unique_ptr<Holder<Args...>> make_unique_holder(Args &&... args) {
+        return std::make_unique<Holder<Args...>>(std::forward<Args>(args)...);
     }
 
-    template<typename... Args>
+    template <typename... Args>
     auto make_unique_tuple(Args &&... args) {
         using TupleType = std::tuple<std::decay_t<Args>...>;
         return std::make_unique<TupleType>(std::forward<Args>(args)...);
     }
 
-}
+} // namespace my_library
