@@ -1,9 +1,9 @@
 #pragma once
 
 #include <functional>
+#include <string_view>
 #include <tuple>
 #include <type_traits>
-#include <string_view>
 
 namespace my_library {
     namespace details {
@@ -20,9 +20,7 @@ namespace my_library {
 
     } // namespace details
     template <typename>
-    struct function_traits final {
-        
-    };
+    struct function_traits final {};
 
 #define CREATE_FN_SIGNATURE_TRAITS(...)                                                                                \
     template <typename R, typename... Args>                                                                            \
